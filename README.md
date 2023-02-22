@@ -17,7 +17,7 @@ $ pip3 install cve_searchsploit
 #### from GitHub
 
 ```
-$ git clone https://github.com/andreafioraldi/cve_searchsploit
+$ git clone https://github.com/ManuelPOISSON/cve_searchsploit_verified.git
 $ cd cve_searchsploit
 $ python3 setup.py install
 ```
