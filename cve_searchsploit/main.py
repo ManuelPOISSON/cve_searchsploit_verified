@@ -178,6 +178,18 @@ def update_db():
     with open(pdir + "/exploitdb_mapping_cve.json", "w") as data_file:
         json.dump(cve_data, data_file, indent=2)
 
+def display_cve_list(cve_list, filter: set[str] = None) -> None:
+    for cve_dict in cve_list:
+        if filter is None:
+            for k, v in cve_dict.items():
+                print(f"{k:20}: {v}")
+        else:
+            for k, v in cve_dict.items():
+                if k.lower() in map(lambda world: world.lower(), filter):
+                    print(f"{k:14}: {v}")
+
+        print("")
+
 
 def _search_cve_aux(cve):
     files = open(pdir + "/exploitdb/files_exploits.csv")
@@ -187,25 +199,28 @@ def _search_cve_aux(cve):
     next(reader)
 
     found = False
+    cve_found: list[dict[str, str]] = []
     for row in reader:
         edb, file, description, date, author, type, platform, port, date_added, date_updated, verified, codes, tags, aliases, screenshot_url, application_url, source_url = tuple(row)
         if edb in cve_map[cve]:
             found = True
-            print(" Exploit DB Id: " + edb)
-            print(" File: " + pdir + "/exploitdb/" + file)
-            print(" Date: " + date)
-            print(" Author: " + author)
-            print(" Platform: " + platform)
-            print(" Type: " + type)
+            cve_found.append(dict())
+            cve_found[-1]["Exploit DB Id"] = edb
+
+            cve_found[-1]["File"] = pdir + "/exploitdb/" + file
+            cve_found[-1]["Date"] = date
+            cve_found[-1]["Author"] = author
+            cve_found[-1]["Platform"] = platform
+            cve_found[-1]["Verified"] = verified
+            cve_found[-1]["Type"] = type
             if port != "0":
-                print(" Port: " + port)
-            print("")
+                cve_found[-1]["Port"] = port
     if not found:
         print("ERROR - No EDB Id found")
         print("")
 
     files.close()
-    return found
+    return found, cve_found
 
 
 def search_from_file(file):
@@ -226,8 +241,8 @@ def search_from_file(file):
             print("")
             continue
 
-        _search_cve_aux(cve)
-
+        _, cve_list = _search_cve_aux(cve)
+        display_cve_list(cve_list)
 
 def search_from_nessus(file):
     reader = csv.reader(file)
@@ -255,11 +270,12 @@ def search_from_nessus(file):
         print(" +----+ Exploit DB matching +----+ ")
         print("")
 
-        _search_cve_aux(cve)
+        _, cve_list = _search_cve_aux(cve)
+        display_cve_list(cve_list)
         print("")
 
 
-def search_cve(cve):
+def search_cve(cve, filter = None):
     cve = cve.upper()
 
     sname = "| " + cve + " |"
@@ -273,9 +289,11 @@ def search_cve(cve):
         print("")
         sys.exit(1)
 
-    found = _search_cve_aux(cve)
+    found, cve_list = _search_cve_aux(cve)
     if not found:
         sys.exit(1)
+
+    display_cve_list(cve_list, filter)
 
 
 def usage():
@@ -334,7 +352,8 @@ def main():
                 print("")
                 sys.exit(1)
         else:
-            search_cve(a)
+            filter = ("Exploit DB Id", "verified", "type")
+            search_cve(a, filter)
 
 
 if not os.path.isdir(pdir + "/exploitdb"):
