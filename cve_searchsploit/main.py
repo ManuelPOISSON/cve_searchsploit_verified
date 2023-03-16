@@ -22,6 +22,7 @@ pdir = os.path.dirname(os.path.abspath(__file__))
 
 cve_map = {}
 
+
 ########## Library functions
 
 
@@ -129,11 +130,12 @@ def update_db():
                 )
                 for pos in indexes:
                     cve = r.text[
-                        pos
-                        + len("https://cve.mitre.org/cgi-bin/cvename.cgi?name=") : pos
-                        + len("https://cve.mitre.org/cgi-bin/cvename.cgi?name=")
-                        + 9
-                    ].upper()
+                          pos
+                          + len("https://cve.mitre.org/cgi-bin/cvename.cgi?name="): pos
+                                                                                    + len(
+                              "https://cve.mitre.org/cgi-bin/cvename.cgi?name=")
+                                                                                    + 9
+                          ].upper()
                     pos += len("https://cve.mitre.org/cgi-bin/cvename.cgi?name=") + 9
                     while pos < len(r.text) and r.text[pos].isdigit():
                         cve += r.text[pos]
@@ -148,11 +150,11 @@ def update_db():
                 )
                 for pos in indexes:
                     cve = r.text[
-                        pos
-                        + len("https://nvd.nist.gov/vuln/detail/") : pos
-                        + len("https://nvd.nist.gov/vuln/detail/")
-                        + 9
-                    ].upper()
+                          pos
+                          + len("https://nvd.nist.gov/vuln/detail/"): pos
+                                                                      + len("https://nvd.nist.gov/vuln/detail/")
+                                                                      + 9
+                          ].upper()
                     pos += len("https://nvd.nist.gov/vuln/detail/") + 9
                     while pos < len(r.text) and r.text[pos].isdigit():
                         cve += r.text[pos]
@@ -178,17 +180,30 @@ def update_db():
     with open(pdir + "/exploitdb_mapping_cve.json", "w") as data_file:
         json.dump(cve_data, data_file, indent=2)
 
-def display_cve_list(cve_list, filter: set[str] = None) -> None:
+
+def display_cve_list(cve_list, filter: set[str] = None, dump_to_file_path="") -> None:
+
+    root_key = "exploits"
+    new_dict: dict[str, list[dict[str, str]]] = {root_key: []}
+
     for cve_dict in cve_list:
         if filter is None:
-            for k, v in cve_dict.items():
-                print(f"{k:20}: {v}")
+            new_dict[root_key].append(cve_dict)
         else:
+            filtered_cve_dict = {}
             for k, v in cve_dict.items():
                 if k.lower() in map(lambda world: world.lower(), filter):
-                    print(f"{k:14}: {v}")
+                    # print(f"{k:14}: {v}")
+                    filtered_cve_dict[k] = v
+            new_dict[root_key].append(filtered_cve_dict)
 
-        print("")
+    dump = json.dumps(new_dict, indent=2)
+    if len(dump_to_file_path) != 0:
+        with open(dump_to_file_path, "w") as f_out:
+            print(dump, file=f_out)
+            print(f"file '{dump_to_file_path}' written")
+    else:
+        print(dump)
 
 
 def _search_cve_aux(cve):
@@ -201,7 +216,8 @@ def _search_cve_aux(cve):
     found = False
     cve_found: list[dict[str, str]] = []
     for row in reader:
-        edb, file, description, date, author, type, platform, port, date_added, date_updated, verified, codes, tags, aliases, screenshot_url, application_url, source_url = tuple(row)
+        edb, file, description, date, author, type, platform, port, date_added, date_updated, verified, codes, tags, aliases, screenshot_url, application_url, source_url = tuple(
+            row)
         if edb in cve_map[cve]:
             found = True
             cve_found.append(dict())
@@ -244,6 +260,7 @@ def search_from_file(file):
         _, cve_list = _search_cve_aux(cve)
         display_cve_list(cve_list)
 
+
 def search_from_nessus(file):
     reader = csv.reader(file)
     # reader.next() #skip header
@@ -275,7 +292,7 @@ def search_from_nessus(file):
         print("")
 
 
-def search_cve(cve, filter = None):
+def search_cve(cve, filter=None):
     cve = cve.upper()
 
     sname = "| " + cve + " |"
@@ -293,7 +310,8 @@ def search_cve(cve, filter = None):
     if not found:
         sys.exit(1)
 
-    display_cve_list(cve_list, filter)
+    # display_cve_list(cve_list, filter, dump_to_file_path="")
+    display_cve_list(cve_list, filter, dump_to_file_path="cve_searchsploit_out.json")
 
 
 def usage():
@@ -352,8 +370,9 @@ def main():
                 print("")
                 sys.exit(1)
         else:
-            filter = ("Exploit DB Id", "verified", "type")
+            filter = ("Exploit DB Id", "verified", "type", "Platform", "File", "Port")
             search_cve(a, filter)
+            # search_cve(a, None)
 
 
 if not os.path.isdir(pdir + "/exploitdb"):
