@@ -1,0 +1,20 @@
+{
+  "exploits": [
+    {
+      "Exploit DB Id": "50592",
+      "File": "/home/mpoisson/Documents/cve_searchsploit_verified/cve_searchsploit/exploitdb/exploits/java/remote/50592.py",
+      "Platform": "java",
+      "Verified": "0",
+      "Type": "remote",
+      "Port": ""
+    },
+    {
+      "Exploit DB Id": "50590",
+      "File": "/home/mpoisson/Documents/cve_searchsploit_verified/cve_searchsploit/exploitdb/exploits/java/remote/50590.py",
+      "Platform": "java",
+      "Verified": "0",
+      "Type": "remote",
+      "Port": ""
+    }
+  ]
+}
